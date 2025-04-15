@@ -1,3 +1,5 @@
+# set as RF Startup Script to enable contextual menu
+
 import ezui
 from mojo.subscriber import Subscriber, registerRoboFontSubscriber
 from mojo.UI import CurrentFontWindow, Message
