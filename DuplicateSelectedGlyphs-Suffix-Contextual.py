@@ -153,7 +153,7 @@ class CustomFontOverviewContextualMenu(Subscriber):
         if not CurrentFont().selectedGlyphNames:
             return
 
-        message = "Duplicate Glyphs..."
+        message = "Duplicate Glyphs"
         my_menu_items = [
             (message, self.openDuplicateWindow)
         ]
