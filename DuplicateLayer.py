@@ -4,6 +4,12 @@ g = CurrentGlyph()
 if g:
     currentLayer = g.layer  # Get the layer of the current glyph
     layerName = currentLayer.name  # Extract the name of the layer
+
+elif font and font.selectedLayerNames:  # Check if layers are selected in the font
+    # Use the first selected layer name
+    layerName = font.selectedLayerNames[0]
+    currentLayer = font.layers[layerName]
+
 else:
     # If no glyph is selected, fallback to the default layer
     if "foreground" in font.layers:
