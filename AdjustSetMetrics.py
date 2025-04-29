@@ -1,3 +1,5 @@
+# menuTitle: Adjust/Set Metrics
+
 import ezui
 from mojo.UI import CurrentFontWindow, Message
 

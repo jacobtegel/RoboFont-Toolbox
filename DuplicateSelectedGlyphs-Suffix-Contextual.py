@@ -1,3 +1,4 @@
+# menuTitle: Duplicate Selected Glyphs
 # set as RF Startup Script to enable contextual menu
 
 import ezui

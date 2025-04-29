@@ -1,4 +1,5 @@
-# Get the current font
+# menuTitle: Set Metrics in Layer
+
 font = CurrentFont()
 if font is None:
     print("No font open.")

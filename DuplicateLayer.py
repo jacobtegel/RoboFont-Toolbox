@@ -1,3 +1,5 @@
+# menuTitle: Duplicate Layer
+
 font = CurrentFont()
 g = CurrentGlyph()
 
