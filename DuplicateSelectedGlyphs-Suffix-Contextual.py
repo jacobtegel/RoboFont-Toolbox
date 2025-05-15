@@ -2,15 +2,15 @@
 # set as RF Startup Script to enable contextual menu
 
 import ezui
-from mojo.subscriber import Subscriber, registerRoboFontSubscriber
+from mojo.subscriber import Subscriber, registerFontOverviewSubscriber
 from mojo.UI import CurrentFontWindow, Message
 
 
-class DuplicateGlyphsWindow(ezui.WindowController):
+class DuplicateGlyphs(ezui.WindowController):
 
     def build(self, parent):
         window = parent.w
-        self.f = CurrentFont()
+        self.f = RFont(parent._font)
         self.glyphs_to_copy = self.f.selectedGlyphNames
 
         content = """
@@ -30,7 +30,7 @@ class DuplicateGlyphsWindow(ezui.WindowController):
         
         [X] Overwrite Existing Glyphs      @overwriteCheckbox
 
-        ======================
+        ===
         
         (Cancel)                           @cancelButton
         (Apply)                            @applyButton
@@ -170,13 +170,19 @@ class DuplicateGlyphsWindow(ezui.WindowController):
             self.new_name_stack.show(True)
 
 
-class CustomFontOverviewContextualMenu(Subscriber):
+class DuplicateGlyphsWindow(Subscriber):
 
     def fontOverviewWantsContextualMenuItems(self, info):
+        f = CurrentFont()
+        self.fo = info['fontOverview']
         if not CurrentFont().selectedGlyphNames:
             return
-
-        message = "Duplicate Glyphs"
+        
+        if len (f.selectedGlyphNames) > 1:
+            message = "Duplicate Glyphs"
+        else:
+            message = "Duplicate Glyph"
+        
         my_menu_items = [
             (message, self.openDuplicateWindow)
         ]
@@ -184,8 +190,8 @@ class CustomFontOverviewContextualMenu(Subscriber):
 
     def openDuplicateWindow(self, sender):
         parent = CurrentFontWindow()
-        DuplicateGlyphsWindow(parent)
+        DuplicateGlyphs(parent)
 
 
 if __name__ == '__main__':
-    registerRoboFontSubscriber(CustomFontOverviewContextualMenu)
+    registerFontOverviewSubscriber(DuplicateGlyphsWindow)

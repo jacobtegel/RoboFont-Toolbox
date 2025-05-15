@@ -1,13 +1,15 @@
-# menuTitle: Adjust/Set Metrics
+# Adjust/Set Metrics Contextual with percentage support
 
 import ezui
 import re
+from mojo.subscriber import Subscriber, registerFontOverviewSubscriber
 from mojo.UI import CurrentFontWindow, Message
 
-class MetricsAdjusterWindow(ezui.WindowController):
+class MetricsAdjuster(ezui.WindowController):
 
-    def build(self):
-        self.f = CurrentFont()
+    def build(self, parent):
+        window = parent.w
+        self.f = RFont(parent._font)
         if not self.f:
             Message("No font open", informativeText="Please open a font first.")
             return
@@ -27,9 +29,10 @@ class MetricsAdjusterWindow(ezui.WindowController):
         
         > [ ] Left /= Right   @equalMarginsCheckbox
                 
-        * HorizontalStack     @buttonStack
-        > (Cancel)            @cancelButton
-        > (Apply)             @applyButton
+        ===
+        
+        (Cancel)            @cancelButton
+        (Apply)             @applyButton
         """
         
         entry_width = 200
@@ -46,13 +49,11 @@ class MetricsAdjusterWindow(ezui.WindowController):
             marginLeftField = dict(
                 placeholder="Left",
                 valueWidth = 75,
-                # valueType="integer",
                 valueFallback = "0"
                 ),
             marginRightField = dict(
                 placeholder = "Right",
                 valueWidth = 75,
-                # valueType = "integer",
                 valueFallback = "0"
                 ),
             combMarginStack = dict(
@@ -61,28 +62,24 @@ class MetricsAdjusterWindow(ezui.WindowController):
                 ),
             combMarginField = dict(
                 placeholder = "Left & Right",
-                # valueType = "integer",
                 valueFallback = "0"
                 ),
             equalMarginsCheckbox = dict(
                 value = 0,
-                ),
-            buttonStack = dict(
-                width = "fill",
                 ),
             cancelButton = dict(
                 width = button_width,
                 ),
             applyButton = dict(
                 width = button_width,
-
             )
         )
         
-        self.w = ezui.EZWindow(
+        self.w = ezui.EZSheet(
             content = content,
             descriptionData = descriptionData,
             size = ("auto", "auto"),
+            parent = window,
             controller = self
         )
         
@@ -97,7 +94,6 @@ class MetricsAdjusterWindow(ezui.WindowController):
         self.equalMargins = self.w.getItem("equalMarginsCheckbox")
         
         self.update_field_options()
-        # self.cancelButton.bind(chr(27), [])
         self.w.setDefaultButton(self.applyButton)
 
     def started(self):
@@ -109,34 +105,6 @@ class MetricsAdjusterWindow(ezui.WindowController):
     def cancelButtonCallback(self, sender):
         self.w.close()
 
-    def applyButtonCallback(self, sender):
-        operation = self.operation.get()
-        equalMargins = self.equalMargins.get()
-    
-        # Check if Equal Margins is enabled
-        if equalMargins == 1:
-            # Use combined margin value for both left and right
-            combMarginValue = self.combMarginField.get()
-            leftMarginValue = rightMarginValue = combMarginValue
-        else:
-            # Use separate margin values
-            leftMarginValue = self.marginLeftField.get()
-            rightMarginValue = self.marginRightField.get()
-    
-        # Get selected glyphs or use all glyphs if none selected
-        selectedGlyphs = self.f.selectedGlyphNames
-        if not selectedGlyphs:
-            selectedGlyphs = self.f.keys()
-    
-        if operation == 0:  # Adjust Metrics by Value
-            self.adjustMetrics(selectedGlyphs, leftMarginValue, rightMarginValue)
-        elif operation == 1:  # Set Metrics to Value
-            self.setMetrics(selectedGlyphs, leftMarginValue, rightMarginValue)
-    
-        # Update the font
-        self.f.changed()
-        self.w.close()
-        
     def parse_margin_input(self, input_value, original_value):
         """
         Parses the input value and returns the new margin value based on the original value.
@@ -163,6 +131,30 @@ class MetricsAdjusterWindow(ezui.WindowController):
             # Absolute value
             return int(input_value) if input_value else 0
 
+    def applyButtonCallback(self, sender):
+        operation = self.operation.get()
+        equalMargins = self.equalMargins.get()
+
+        # Check if Equal Margins is enabled
+        if equalMargins == 1:
+            combMarginValue = self.combMarginField.get()
+            leftMarginValue = rightMarginValue = combMarginValue
+        else:
+            leftMarginValue = self.marginLeftField.get()
+            rightMarginValue = self.marginRightField.get()
+
+        selectedGlyphs = self.f.selectedGlyphNames
+        if not selectedGlyphs:
+            selectedGlyphs = self.f.keys()
+
+        if operation == 0:  # Adjust Metrics by Value
+            self.adjustMetrics(selectedGlyphs, leftMarginValue, rightMarginValue)
+        elif operation == 1:  # Set Metrics to Value
+            self.setMetrics(selectedGlyphs, leftMarginValue, rightMarginValue)
+
+        self.f.changed()
+        self.w.close()
+
     def adjustMetrics(self, glyphNames, leftAdjust, rightAdjust):
         for glyphName in glyphNames:
             glyph = self.f[glyphName]
@@ -183,7 +175,7 @@ class MetricsAdjusterWindow(ezui.WindowController):
                         Message("Invalid Input", informativeText=str(e))
                         return
                     glyph.rightMargin = newRight
-    
+
     def setMetrics(self, glyphNames, leftValue, rightValue):
         for glyphName in glyphNames:
             glyph = self.f[glyphName]
@@ -208,11 +200,31 @@ class MetricsAdjusterWindow(ezui.WindowController):
 
     def update_field_options(self):
         equalMargins = self.equalMargins.get()
-        if equalMargins == 0:  # Show seperate Margins Field
+        if equalMargins == 0:
             self.marginStack.show(True)
             self.combMarginStack.show(False)
-        elif equalMargins == 1:  # Show combined Margins Field
+        elif equalMargins == 1:
             self.marginStack.show(False)
             self.combMarginStack.show(True)
 
-MetricsAdjusterWindow()
+class MetricsAdjusterWindow(Subscriber):
+
+    def fontOverviewWantsContextualMenuItems(self, info):
+        self.f = CurrentFont()
+        self.fo = info['fontOverview']
+        
+        if not CurrentFont().selectedGlyphNames:
+            return
+
+        message = "Adjust / Set Metrics"
+        my_menu_items = [
+            (message, self.openAdjustSetMetricsWindow)
+        ]
+        info['itemDescriptions'].extend(my_menu_items)
+
+    def openAdjustSetMetricsWindow(self, sender):
+        parent = CurrentFontWindow()
+        MetricsAdjuster(parent)
+
+if __name__ == '__main__':
+    registerFontOverviewSubscriber(MetricsAdjusterWindow)
