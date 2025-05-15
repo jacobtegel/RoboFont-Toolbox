@@ -17,6 +17,8 @@ class DuplicateGlyphsWindow(ezui.WindowController):
         (X) Duplicate with Suffix          @operationRadios
         ( ) Duplicate with New Name
         
+        [ ] Source as Component            @componentCheckbox
+        
         ---
         
         . [_ _]                            @suffixTextField
@@ -65,7 +67,9 @@ class DuplicateGlyphsWindow(ezui.WindowController):
             controller=self
         )
         self.operation = self.w.getItem("operationRadios")
+        
         self.suffix_field = self.w.getItem("suffixTextField")
+        self.component_checkbox = self.w.getItem("componentCheckbox")
         self.new_name_field = self.w.getItem("newNameTextField")
         self.new_name_stack = self.w.getItem("newNameStack")
         self.overwrite = self.w.getItem("overwriteCheckbox")
@@ -112,27 +116,47 @@ class DuplicateGlyphsWindow(ezui.WindowController):
             if new_glyph_name in self.f.glyphOrder and not self.overwrite.get():
                 Message("Error", informativeText=f"Glyph '{new_glyph_name}' already exists. Enable overwrite to proceed.")
                 continue
-            self.f.insertGlyph(self.f[glyph_name], new_glyph_name)
-            self.f[new_glyph_name].unicode = None
+            if self.component_checkbox.get():
+                # Create new glyph and add component
+                if new_glyph_name in self.f:
+                    new_glyph = self.f[new_glyph_name]
+                    new_glyph.clear()
+                else:
+                    new_glyph = self.f.newGlyph(new_glyph_name)
+                new_glyph.appendComponent(glyph_name)
+                new_glyph.leftMargin = self.f[glyph_name].leftMargin
+                new_glyph.rightMargin = self.f[glyph_name].rightMargin
+                new_glyph.unicode = None
+            else:
+                self.f.insertGlyph(self.f[glyph_name], new_glyph_name)
+                self.f[new_glyph_name].unicode = None
             print(f"Created {new_glyph_name}.")
-
-        self.f.update()
-
+        self.f.changed()
+    
     def duplicate_with_new_name(self, new_name):
         if len(self.glyphs_to_copy) > 1:
             Message("Error", informativeText="Please select only one glyph for this operation.")
             return
-        
         glyph_name = self.glyphs_to_copy[0]
         if new_name in self.f.glyphOrder and not self.overwrite.get():
             Message("Error", informativeText=f"Glyph '{new_name}' already exists. Enable overwrite to proceed.")
             return
-        self.f.insertGlyph(self.f[glyph_name], new_name)
-        self.f[new_name].unicode = None
+        if self.component_checkbox.get():
+            if new_name in self.f:
+                new_glyph = self.f[new_name]
+                new_glyph.clear()
+            else:
+                new_glyph = self.f.newGlyph(new_name)
+            new_glyph.appendComponent(glyph_name)
+            new_glyph.leftMargin = self.f[glyph_name].leftMargin
+            new_glyph.rightMargin = self.f[glyph_name].rightMargin
+            new_glyph.unicode = None
+        else:
+            self.f.insertGlyph(self.f[glyph_name], new_name)
+            self.f[new_name].unicode = None
         print(f"Created {new_name}.")
+        self.f.changed()
         
-        self.f.update()
-
     def operationRadiosCallback(self, sender):
         self.update_field_options()
 
@@ -147,8 +171,6 @@ class DuplicateGlyphsWindow(ezui.WindowController):
 
 
 class CustomFontOverviewContextualMenu(Subscriber):
-
-    debug = True
 
     def fontOverviewWantsContextualMenuItems(self, info):
         if not CurrentFont().selectedGlyphNames:
