@@ -135,32 +135,41 @@ class MetricsAdjusterWindow(ezui.WindowController):
     
         # Update the font
         self.f.changed()
-        self.w.close()
         
     def parse_margin_input(self, input_value, original_value):
         """
         Parses the input value and returns the new margin value based on the original value.
         Supports:
         - Absolute values (e.g., 50)
+        - Relative values (e.g., +5, -10)
         - Percentages (e.g., 90%, -10%, +5%)
         """
-        if isinstance(input_value, str) and "%" in input_value:
-            match = re.match(r"^([+-]?)(\d+(\.\d+)?)%$", input_value.strip())
-            if not match:
-                raise ValueError("Invalid percentage format")
-            sign, number, _ = match.groups()
-            percent = float(number) / 100.0
-            if sign == "":
-                # e.g., 90%: set to 90% of original
-                return int(round(original_value * percent))
-            elif sign == "-":
-                # e.g., -10%: subtract 10% of original
-                return int(round(original_value * (1 - percent)))
-            elif sign == "+":
-                # e.g., +5%: add 5% of original
-                return int(round(original_value * (1 + percent)))
+        if isinstance(input_value, str):
+            input_value = input_value.strip()
+            if "%" in input_value:
+                match = re.match(r"^([+-]?)(\d+(\.\d+)?)%$", input_value)
+                if not match:
+                    raise ValueError("Invalid percentage format")
+                sign, number, _ = match.groups()
+                percent = float(number) / 100.0
+                if sign == "":
+                    return int(round(original_value * percent))
+                elif sign == "-":
+                    return int(round(original_value * (1 - percent)))
+                elif sign == "+":
+                    return int(round(original_value * (1 + percent)))
+            else:
+                match = re.match(r"^([+-])(\d+)$", input_value)
+                if match:
+                    sign, number = match.groups()
+                    delta = int(number)
+                    if sign == "+":
+                        return original_value + delta
+                    else:
+                        return original_value - delta
+                # Absolute value
+                return int(input_value) if input_value else 0
         else:
-            # Absolute value
             return int(input_value) if input_value else 0
 
     def adjustMetrics(self, glyphNames, leftAdjust, rightAdjust):

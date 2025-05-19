@@ -20,9 +20,9 @@ class StealMetricsController(ezui.WindowController):
         > (Select Target) @selectTargetButton
         > [Path: None] @targetFileLabel
         
-        * HorizontalStack @buttonStack
-        > (Cancel) @cancelButton
-        > (Apply) @applyButton
+        ===
+        (Cancel) @cancelButton
+        (Apply) @applyButton
         
         """
         
