@@ -67,7 +67,7 @@ class ExportLayersController(ezui.WindowController):
             
             max_length = 30
             if len(self.exportFolder) > max_length:
-                truncated_path = f"...{self.exportFolder[-(max_length - 3):]}"
+                truncated_path = f"...{self.exportFolder[-(max_length - 6):]}"
             else:
                 truncated_path = self.exportFolder
             
