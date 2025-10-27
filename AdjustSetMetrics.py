@@ -46,13 +46,11 @@ class MetricsAdjusterWindow(ezui.WindowController):
             marginLeftField = dict(
                 placeholder="Left",
                 valueWidth = 75,
-                # valueType="integer",
                 valueFallback = "0"
                 ),
             marginRightField = dict(
                 placeholder = "Right",
                 valueWidth = 75,
-                # valueType = "integer",
                 valueFallback = "0"
                 ),
             combMarginStack = dict(
@@ -61,7 +59,6 @@ class MetricsAdjusterWindow(ezui.WindowController):
                 ),
             combMarginField = dict(
                 placeholder = "Left & Right",
-                # valueType = "integer",
                 valueFallback = "0"
                 ),
             equalMarginsCheckbox = dict(
@@ -113,27 +110,22 @@ class MetricsAdjusterWindow(ezui.WindowController):
         operation = self.operation.get()
         equalMargins = self.equalMargins.get()
     
-        # Check if Equal Margins is enabled
         if equalMargins == 1:
-            # Use combined margin value for both left and right
             combMarginValue = self.combMarginField.get()
             leftMarginValue = rightMarginValue = combMarginValue
         else:
-            # Use separate margin values
             leftMarginValue = self.marginLeftField.get()
             rightMarginValue = self.marginRightField.get()
     
-        # Get selected glyphs or use all glyphs if none selected
         selectedGlyphs = self.f.selectedGlyphNames
         if not selectedGlyphs:
             selectedGlyphs = self.f.keys()
     
-        if operation == 0:  # Adjust Metrics by Value
+        if operation == 0:
             self.adjustMetrics(selectedGlyphs, leftMarginValue, rightMarginValue)
-        elif operation == 1:  # Set Metrics to Value
+        elif operation == 1:
             self.setMetrics(selectedGlyphs, leftMarginValue, rightMarginValue)
     
-        # Update the font
         self.f.changed()
         
     def parse_margin_input(self, input_value, original_value):

@@ -4,22 +4,26 @@ font = CurrentFont()
 g = CurrentGlyph()
 
 if g:
-    currentLayer = g.layer  # Get the layer of the current glyph
-    layerName = currentLayer.name  # Extract the name of the layer
+    # if glyph is selected 
+    layer = g.layer
+    layerName = layer.name
 
 else:
-    # If no glyph is selected, fallback to the default layer
+    # if no glyph is selected, fallback to the default layer
     if "foreground" in font.layers:
-        currentLayer = font.layers["foreground"]
-    else:
-        currentLayer = font.layers[0]  # Fallback to the first layer
+        layer = font.layers["foreground"]
     
-    layerName = currentLayer.name  # Extract the name of the default layer
+    else:
+        # fallback to default layer
+        layer = font.defaultLayer
+    
+    layerName = layer.name
 
-# Create a new layer name for duplication
 newLayerName = f"{layerName} copy"
 
-# Duplicate the current layer
+while newLayerName in font.layerOrder:
+    newLayerName = f"{newLayerName} copy"
+
 font.duplicateLayer(layerName, newLayerName)
 
 print(f"Duplicated layer '{layerName}' as '{newLayerName}'.")
